@@ -5,11 +5,50 @@ from .region import Region
 from .errors import OutOfBoundsCoordinates, ChunkNotFound
 import math
 
+# Last Checked Version: 1.20.2-rc2
+# ----------------------------------------------------------------------------------------------------
+# Data Versions - https://minecraft.fandom.com/wiki/Data_version
+# Anvil Format - https://minecraft.fandom.com/wiki/Anvil_file_format
+# Chunk Format - https://minecraft.fandom.com/wiki/Chunk_format
+# ----------------------------------------------------------------------------------------------------
+# NBT Format - https://minecraft.fandom.com/wiki/NBT_format
+# Entity Format - https://minecraft.fandom.com/wiki/Entity_format
+# Player.dat Format - https://minecraft.fandom.com/wiki/Player.dat_format (note 23w32a changes the player.dat format)
+# Level.dat Format - https://minecraft.fandom.com/wiki/Java_Edition_level_format#level.dat_format
+# Structure File Format - https://minecraft.fandom.com/wiki/Structure_Block_file_format
+# POI Format - https://minecraft.fandom.com/wiki/Point_of_Interest
+# Villages.dat Format - https://minecraft.fandom.com/wiki/Villages.dat_format
+# Raids.dat Format - https://minecraft.fandom.com/wiki/Raids.dat_format
+# Map Format - https://minecraft.fandom.com/wiki/Map_item_format
+# Servers.dat Format - https://minecraft.fandom.com/wiki/Servers.dat_format
+# Schematic File Format (Unofficial) - https://minecraft.fandom.com/wiki/Schematic_file_format
 
+
+# Implement
+# ----------------------------------------------------------------------------------------------------
+# Chunk Format Changed - https://minecraft.fandom.com/wiki/Java_Edition_21w43a
+# Removed the Level tag and moved everything up a level (e.g. Level.TileEntities to block_entities)
+_VERSION_21w43a = 2844
+
+# Chunk Format Changed - https://minecraft.fandom.com/wiki/Java_Edition_21w39a
+# Chunk tags were renamed and had their data type changed too (e.g. BlockStates to block_states)
+_VERSION_21w39a = 2836
+
+# Build Height Limit Decrease - https://minecraft.fandom.com/wiki/Java_Edition_21w15a
+# Build height limit reverted back to 256 blocks (0 to 255) from version 21w06a
+_VERSION_21w15a = 2709
+
+# Build Height Limit Increase - https://minecraft.fandom.com/wiki/Java_Edition_21w06a
+# Build height limit increased to 384 blocks (-64 to 319)
+_VERSION_21w06a = 2694
+# ----------------------------------------------------------------------------------------------------
+
+# Block Storage Format Changed - https://minecraft.fandom.com/wiki/Java_Edition_20w17a
 # This version removes block state value stretching from the storage
 # so a block value isn't in multiple elements of the array
 _VERSION_20w17a = 2529
 
+# Block Format Changed - https://minecraft.fandom.com/wiki/Java_Edition_17w47a
 # This is the version where "The Flattening" (https://minecraft.gamepedia.com/Java_Edition_1.13/Flattening) happened
 # where blocks went from numeric ids to namespaced ids (namespace:block_id)
 _VERSION_17w47a = 1451
