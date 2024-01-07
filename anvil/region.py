@@ -3,7 +3,7 @@ from nbt import nbt
 import zlib
 from io import BytesIO
 import anvil
-from .errors import GZipChunkData
+from .errors import GZipChunkData, EmptyRegionFile
 
 class Region:
     """
@@ -13,10 +13,19 @@ class Region:
     ----------
     data: :class:`bytes`
         Region file (``.mca``) as bytes
+
+    Raises
+        ------
+        anvil.errors.EmptyRegionFile
+            If region file has no data to process
     """
     __slots__ = ('data',)
     def __init__(self, data: bytes):
         """Makes a Region object from data, which is the region file content"""
+        if not data:
+            self.data = None
+            raise EmptyRegionFile('Region file is empty. There\'s no data to process')
+
         self.data = data
 
     @staticmethod

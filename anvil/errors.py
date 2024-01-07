@@ -10,5 +10,10 @@ class EmptySectionAlreadyExists(Exception):
     and the chunk already has a section with the same Y
     """
 
+class EmptyRegionFile(Exception):
+    """
+    Exception used when trying to read a region file which has no data
+    """
+
 class GZipChunkData(Exception):
     """Exception used when trying to get chunk data compressed in gzip"""

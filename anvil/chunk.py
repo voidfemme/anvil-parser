@@ -224,7 +224,7 @@ class Chunk:
 
         Raises
         ------
-        anvil.OutOfBoundCoordidnates
+        anvil.errors.OutOfBoundCoordinates
             If X, Y or Z are not in the proper range
 
         :rtype: :class:`anvil.Block`
@@ -374,7 +374,7 @@ class Chunk:
 
         Raises
         ------
-        anvil.OutOfBoundCoordidnates
+        anvil.errors.OutOfBoundCoordinates
             If `section` is not in the range of 0 to 15
 
         Yields
