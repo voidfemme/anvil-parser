@@ -89,7 +89,7 @@ class Chunk:
     tile_entities: :class:`nbt.TAG_Compound`
         ``self.data['TileEntities']`` as an attribute for easier use (or ``self.data['block_entities']`` if chunk's world's version is at least 21w43a)
     """
-    __slots__ = ('version', 'data', 'x', 'z', 'tile_entities')
+    __slots__ = ('version', 'data', 'x', 'z', 'tile_entities', 'lowest_y', 'heighest_y')
 
     def __init__(self, nbt_data: nbt.NBTFile):
         try:
@@ -108,6 +108,36 @@ class Chunk:
 
         self.x = self.data['xPos'].value
         self.z = self.data['zPos'].value
+        self.lowest_y = self.get_lowest_section()
+        self.heighest_y = self.get_heighest_section()
+
+        # print("(X: %s, Z: %s, L: %s, H: %s)" % (self.x, self.z, self.lowest_y, self.heighest_y))
+
+
+    def get_lowest_section(self) -> int:
+        try:
+            if self.version >= _VERSION_21w43a:
+                sections = self.data['sections']
+            else:
+                sections = self.data['Sections']
+        except KeyError:
+            return None
+
+        if self.version >= _VERSION_21w43a:
+            return self.data['yPos'].value
+
+        return sections[0]['Y'].value
+
+    def get_heighest_section(self) -> int:
+        try:
+            if self.version >= _VERSION_21w43a:
+                sections = self.data['sections']
+            else:
+                sections = self.data['Sections']
+        except KeyError:
+            return None
+
+        return sections[-1]['Y'].value
 
     def get_section(self, y: int) -> nbt.TAG_Compound:
         """
@@ -124,7 +154,7 @@ class Chunk:
         anvil.OutOfBoundsCoordinates
             If Y is not in range of 0 to 15
         """
-        if y < 0 or y > 15:
+        if y < self.lowest_y or y > self.heighest_y:
             raise OutOfBoundsCoordinates(f'Y ({y!r}) must be in range of 0 to 15')
 
         try:
@@ -198,6 +228,8 @@ class Chunk:
             raise OutOfBoundsCoordinates(f'X ({x!r}) must be in range of 0 to 15')
         if z < 0 or z > 15:
             raise OutOfBoundsCoordinates(f'Z ({z!r}) must be in range of 0 to 15')
+        if y < self.lowest_y*16 or y > (self.heighest_y*16)+15:
+            raise OutOfBoundsCoordinates(f'Y ({y!r}) must be in range of 0 to 255')
 
         if section is None:
             section = self.get_section(y // 16)
