@@ -24,8 +24,6 @@ import math
 # Schematic File Format (Unofficial) - https://minecraft.fandom.com/wiki/Schematic_file_format
 
 
-# Implement
-# ----------------------------------------------------------------------------------------------------
 # Chunk Format Changed - https://minecraft.fandom.com/wiki/Java_Edition_21w43a
 # Removed the Level tag and moved everything up a level (e.g. Level.TileEntities to block_entities)
 _VERSION_21w43a = 2844
@@ -41,7 +39,6 @@ _VERSION_21w15a = 2709
 # Build Height Limit Increase - https://minecraft.fandom.com/wiki/Java_Edition_21w06a
 # Build height limit increased to 384 blocks (-64 to 319)
 _VERSION_21w06a = 2694
-# ----------------------------------------------------------------------------------------------------
 
 # Block Storage Format Changed - https://minecraft.fandom.com/wiki/Java_Edition_20w17a
 # This version removes block state value stretching from the storage
@@ -52,6 +49,11 @@ _VERSION_20w17a = 2529
 # This is the version where "The Flattening" (https://minecraft.gamepedia.com/Java_Edition_1.13/Flattening) happened
 # where blocks went from numeric ids to namespaced ids (namespace:block_id)
 _VERSION_17w47a = 1451
+
+# This was the version that introduced the anvil format and added customizable build height
+# There is no version number as this was prior to data versions being introduced
+# Data versions were introduced with 15w32a (1.9 snapshot) and started at 100
+# _VERSION_12w07a = -1
 
 def bin_append(a, b, length=None):
     """
@@ -85,7 +87,7 @@ class Chunk:
     data: :class:`nbt.TAG_Compound`
         Raw NBT data of the chunk
     tile_entities: :class:`nbt.TAG_Compound`
-        ``self.data['TileEntities']`` as an attribute for easier use
+        ``self.data['TileEntities']`` as an attribute for easier use (or ``self.data['block_entities']`` if chunk's world's version is at least 21w43a)
     """
     __slots__ = ('version', 'data', 'x', 'z', 'tile_entities')
 
@@ -97,10 +99,15 @@ class Chunk:
             # See https://minecraft.fandom.com/wiki/Data_version
             self.version = None
 
-        self.data = nbt_data['Level']
+        if self.version >= _VERSION_21w43a:
+            self.data = nbt_data
+            self.tile_entities = self.data['block_entities']
+        else:
+            self.data = nbt_data['Level']
+            self.tile_entities = self.data['TileEntities']
+
         self.x = self.data['xPos'].value
         self.z = self.data['zPos'].value
-        self.tile_entities = self.data['TileEntities']
 
     def get_section(self, y: int) -> nbt.TAG_Compound:
         """
@@ -121,7 +128,12 @@ class Chunk:
             raise OutOfBoundsCoordinates(f'Y ({y!r}) must be in range of 0 to 15')
 
         try:
-            sections = self.data["Sections"]
+            # print("Data: %s" % self.data)
+
+            if self.version >= _VERSION_21w43a:
+                sections = self.data['sections']
+            else:
+                sections = self.data['Sections']
         except KeyError:
             return None
 
@@ -145,7 +157,20 @@ class Chunk:
             section = self.get_section(section)
         if section is None:
             return
-        return tuple(Block.from_palette(i) for i in section['Palette'])
+
+        # print("Section: %s" % section)
+        if self.version >= _VERSION_21w39a:
+            palette_parent = section['block_states']
+        else:
+            palette_parent = section
+
+        if self.version >= _VERSION_21w43a:
+            palette_tag = 'palette'
+        else:
+            palette_tag = 'Palette'
+
+        # print("palette_parent: %s" % palette_parent)
+        return tuple(Block.from_palette(i) for i in palette_parent[palette_tag])
 
     def get_block(self, x: int, y: int, z: int, section: Union[int, nbt.TAG_Compound]=None, force_new: bool=False) -> Union[Block, OldBlock]:
         """
@@ -173,8 +198,6 @@ class Chunk:
             raise OutOfBoundsCoordinates(f'X ({x!r}) must be in range of 0 to 15')
         if z < 0 or z > 15:
             raise OutOfBoundsCoordinates(f'Z ({z!r}) must be in range of 0 to 15')
-        if y < 0 or y > 255:
-            raise OutOfBoundsCoordinates(f'Y ({y!r}) must be in range of 0 to 255')
 
         if section is None:
             section = self.get_section(y // 16)
@@ -183,7 +206,6 @@ class Chunk:
 
         if self.version is None or self.version < _VERSION_17w47a:
             # Explained in depth here https://minecraft.gamepedia.com/index.php?title=Chunk_format&oldid=1153403#Block_format
-
             if section is None or 'Blocks' not in section:
                 if force_new:
                     return Block.from_name('minecraft:air')
@@ -204,20 +226,37 @@ class Chunk:
             else:
                 return block
 
+        if self.version >= _VERSION_21w39a:
+            block_states_tag = 'block_states'
+            palette_parent = section[block_states_tag]
+        else:
+            block_states_tag = 'BlockStates'
+            palette_parent = section
+
         # If its an empty section its most likely an air block
-        if section is None or 'BlockStates' not in section:
+        # print("Section: %s" % section)
+        if section is None or block_states_tag not in section:
             return Block.from_name('minecraft:air')
 
         # Number of bits each block is on BlockStates
         # Cannot be lower than 4
-        bits = max((len(section['Palette']) - 1).bit_length(), 4)
+        bits = max((len(section[block_states_tag]) - 1).bit_length(), 4)
 
         # Get index on the block list with the order YZX
         index = y * 16*16 + z * 16 + x
 
         # BlockStates is an array of 64 bit numbers
         # that holds the blocks index on the palette list
-        states = section['BlockStates'].value
+        # TODO: Confirm 21w39a is actually the version that block_states was moved to 'data'
+        if self.version >= _VERSION_21w39a:
+            # If its an empty section its most likely an air block
+            if 'data' not in section[block_states_tag]:
+                return Block.from_name('minecraft:air')
+
+            states = section[block_states_tag]['data'].value
+        else:
+            states = section[block_states_tag].value
+        # print("States: %s" % states)
 
         # in 20w17a and newer blocks cannot occupy more than one element on the BlockStates array
         stretches = self.version is None or self.version < _VERSION_20w17a
@@ -232,6 +271,7 @@ class Chunk:
         # makes sure the number is unsigned
         # by adding 2^64
         # could also use ctypes.c_ulonglong(n).value but that'd require an extra import
+        # print("State: %s" % state)
         data = states[state]
         if data < 0:
             data += 2**64
@@ -263,7 +303,13 @@ class Chunk:
         # which are the palette index
         palette_id = shifted_data & 2**bits - 1
 
-        block = section['Palette'][palette_id]
+        if self.version >= _VERSION_21w43a:
+            palette_tag = 'palette'
+        else:
+            palette_tag = 'Palette'
+
+        # print("Block: %s" % palette_parent[palette_tag][palette_id])
+        block = palette_parent[palette_tag][palette_id]
         return Block.from_palette(block)
 
     def stream_blocks(self, index: int=0, section: Union[int, nbt.TAG_Compound]=None, force_new: bool=False) -> Generator[Block, None, None]:
@@ -324,14 +370,26 @@ class Chunk:
                 index += 1
             return
 
-        if section is None or 'BlockStates' not in section:
+        if self.version >= _VERSION_21w39a:
+            block_states_tag = 'block_states'
+            palette_parent = section[block_states_tag]
+        else:
+            block_states_tag = 'BlockStates'
+            palette_parent = section
+
+        if self.version >= _VERSION_21w43a:
+            palette_tag = 'palette'
+        else:
+            palette_tag = 'Palette'
+
+        if section is None or block_states_tag not in section:
             air = Block.from_name('minecraft:air')
             for i in range(4096):
                 yield air
             return
 
-        states = section['BlockStates'].value
-        palette = section['Palette']
+        states = section[block_states_tag].value
+        palette = palette_parent[palette_tag]
 
         bits = max((len(palette) - 1).bit_length(), 4)
 
