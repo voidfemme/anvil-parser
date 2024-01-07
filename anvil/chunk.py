@@ -82,14 +82,18 @@ class Chunk:
         Chunk's X position
     z: :class:`int`
         Chunk's Z position
+    lowest_y: :class:`int`
+        Chunk's lowest Y position
+    highest_y: :class:`int`
+        Chunk's highest Y position
     version: :class:`int`
         Version of the chunk NBT structure
     data: :class:`nbt.TAG_Compound`
         Raw NBT data of the chunk
-    tile_entities: :class:`nbt.TAG_Compound`
+    block_entities: :class:`nbt.TAG_Compound`
         ``self.data['TileEntities']`` as an attribute for easier use (or ``self.data['block_entities']`` if chunk's world's version is at least 21w43a)
     """
-    __slots__ = ('version', 'data', 'x', 'z', 'tile_entities', 'lowest_y', 'heighest_y')
+    __slots__ = ('version', 'data', 'x', 'z', 'lowest_y', 'highest_y', 'block_entities', 'tile_entities')
 
     def __init__(self, nbt_data: nbt.NBTFile):
         try:
@@ -106,13 +110,15 @@ class Chunk:
             self.data = nbt_data['Level']
             self.tile_entities = self.data['TileEntities']
 
+        # to match the rename. we aren't getting rid of tile_entities, just making sure there's a match with the modern term
+        self.block_entities = self.tile_entities
+
         self.x = self.data['xPos'].value
         self.z = self.data['zPos'].value
         self.lowest_y = self.get_lowest_section()
-        self.heighest_y = self.get_heighest_section()
+        self.highest_y = self.get_highest_section()
 
-        # print("(X: %s, Z: %s, L: %s, H: %s)" % (self.x, self.z, self.lowest_y, self.heighest_y))
-
+        # print("(X: %s, Z: %s, L: %s, H: %s)" % (self.x, self.z, self.lowest_y, self.highest_y))
 
     def get_lowest_section(self) -> int:
         try:
@@ -128,7 +134,7 @@ class Chunk:
 
         return sections[0]['Y'].value
 
-    def get_heighest_section(self) -> int:
+    def get_highest_section(self) -> int:
         try:
             if self.version >= _VERSION_21w43a:
                 sections = self.data['sections']
@@ -152,10 +158,10 @@ class Chunk:
         Raises
         ------
         anvil.OutOfBoundsCoordinates
-            If Y is not in range of 0 to 15
+            If Y is not in range of self.lowest_y to self.highest_y
         """
-        if y < self.lowest_y or y > self.heighest_y:
-            raise OutOfBoundsCoordinates(f'Y ({y!r}) must be in range of 0 to 15')
+        if y < self.lowest_y or y > self.highest_y:
+            raise OutOfBoundsCoordinates(f'Y ({y!r}) must be in range of {self.lowest_y!r} to {self.highest_y!r}')
 
         try:
             # print("Data: %s" % self.data)
@@ -179,7 +185,6 @@ class Chunk:
         ----------
         section
             Either a section NBT tag or an index
-
 
         :rtype: Tuple[:class:`anvil.Block`]
         """
@@ -228,8 +233,8 @@ class Chunk:
             raise OutOfBoundsCoordinates(f'X ({x!r}) must be in range of 0 to 15')
         if z < 0 or z > 15:
             raise OutOfBoundsCoordinates(f'Z ({z!r}) must be in range of 0 to 15')
-        if y < self.lowest_y*16 or y > (self.heighest_y*16)+15:
-            raise OutOfBoundsCoordinates(f'Y ({y!r}) must be in range of 0 to 255')
+        if y < self.lowest_y*16 or y > (self.highest_y*16)+15:
+            raise OutOfBoundsCoordinates(f'Y ({y!r}) must be in range of {self.lowest_y*16!r} to {(self.highest_y*16)+15!r}')
 
         if section is None:
             section = self.get_section(y // 16)
@@ -251,8 +256,8 @@ class Chunk:
                 block_id += nibble(section['Add'], index) << 8
 
             block_data = nibble(section['Data'], index)
-
             block = OldBlock(block_id, block_data)
+
             if force_new:
                 return block.convert()
             else:
@@ -260,10 +265,8 @@ class Chunk:
 
         if self.version >= _VERSION_21w39a:
             block_states_tag = 'block_states'
-            palette_parent = section[block_states_tag]
         else:
             block_states_tag = 'BlockStates'
-            palette_parent = section
 
         # If its an empty section its most likely an air block
         # print("Section: %s" % section)
@@ -334,6 +337,13 @@ class Chunk:
         # get `bits` least significant bits
         # which are the palette index
         palette_id = shifted_data & 2**bits - 1
+
+        if self.version >= _VERSION_21w39a:
+            block_states_tag = 'block_states'
+            palette_parent = section[block_states_tag]
+        else:
+            block_states_tag = 'BlockStates'
+            palette_parent = section
 
         if self.version >= _VERSION_21w43a:
             palette_tag = 'palette'
@@ -479,20 +489,23 @@ class Chunk:
         ------
         :class:`anvil.Block`
         """
-        for section in range(16):
+        for section in range(self.lowest_y, self.highest_y):
             for block in self.stream_blocks(section=section):
                 yield block
 
     def get_tile_entity(self, x: int, y: int, z: int) -> Optional[nbt.TAG_Compound]:
-        """
-        Returns the tile entity at given coordinates, or ``None`` if there isn't a tile entity
+        return self.get_block_entity(x, y, z)
 
-        To iterate through all tile entities in the chunk, use :class:`Chunk.tile_entities`
+    def get_block_entity(self, x: int, y: int, z: int) -> Optional[nbt.TAG_Compound]:
         """
-        for tile_entity in self.tile_entities:
-            t_x, t_y, t_z = [tile_entity[k].value for k in 'xyz']
-            if x == t_x and y == t_y and z == t_z:
-                return tile_entity
+        Returns the block entity at given coordinates, or ``None`` if there isn't a block entity
+
+        To iterate through all block entities in the chunk, use :class:`Chunk.block_entities`
+        """
+        for block_entity in self.block_entities:
+            b_x, b_y, b_z = [block_entity[k].value for k in 'xyz']
+            if x == b_x and y == b_y and z == b_z:
+                return block_entity
 
     @classmethod
     def from_region(cls, region: Union[str, Region], chunk_x: int, chunk_z: int):

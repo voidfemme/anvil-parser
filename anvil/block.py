@@ -62,7 +62,7 @@ class Block:
         ----------
         name
             Block in said format
-        , args, kwargs
+        args, kwargs
             Will be passed on to the main constructor
         """
         namespace, block_id = name.split(':')
@@ -71,7 +71,7 @@ class Block:
     @classmethod
     def from_palette(cls, tag: nbt.TAG_Compound):
         """
-        Creates a new Block from the tag format on Section.Palette
+        Creates a new Block from the tag format on section.block_states.palette
 
         Parameters
         ----------
@@ -87,7 +87,7 @@ class Block:
     @classmethod
     def from_numeric_id(cls, block_id: int, data: int=0):
         """
-        Creates a new Block from the block_id:data fromat used pre-flattening (pre-1.13)
+        Creates a new Block from the block_id:data format used pre-flattening (pre-1.13)
 
         Parameters
         ----------
