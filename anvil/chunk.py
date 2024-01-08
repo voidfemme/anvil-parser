@@ -2,7 +2,7 @@ from typing import Union, Tuple, Generator, Optional
 from nbt import nbt
 from .block import Block, OldBlock
 from .region import Region
-from .errors import OutOfBoundsCoordinates, ChunkNotFound
+from .errors import OutOfBoundsCoordinates, ChunkNotFound, EmptyRegionFile
 import math
 
 # Last Checked Version: 1.20.2-rc2
@@ -132,6 +132,9 @@ class Chunk:
         if self.version >= _VERSION_21w43a:
             return self.data['yPos'].value
 
+        if len(sections) < 1:
+            raise EmptyRegionFile('The section array is empty. There\'s no data to process')
+        
         return sections[0]['Y'].value
 
     def get_highest_section(self) -> int:
@@ -142,6 +145,9 @@ class Chunk:
                 sections = self.data['Sections']
         except KeyError:
             return None
+
+        if len(sections) < 1:
+            raise EmptyRegionFile('The section array is empty. There\'s no data to process')
 
         return sections[-1]['Y'].value
 
@@ -282,7 +288,10 @@ class Chunk:
 
         # Number of bits each block is on BlockStates
         # Cannot be lower than 4
-        bits = max((len(section[block_states_tag][palette_tag]) - 1).bit_length(), 4)
+        if self.version >= _VERSION_21w39a:
+            bits = max((len(section[block_states_tag][palette_tag]) - 1).bit_length(), 4)
+        else:
+            bits = max((len(section[palette_tag]) - 1).bit_length(), 4)
 
         # Get index on the block list with the order YZX
         index = y * 16*16 + z * 16 + x

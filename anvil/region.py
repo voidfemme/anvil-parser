@@ -3,7 +3,7 @@ from nbt import nbt
 import zlib
 from io import BytesIO
 import anvil
-from .errors import GZipChunkData, EmptyRegionFile
+from .errors import GZipChunkData, EmptyRegionFile, CorruptedData
 
 class Region:
     """
@@ -92,7 +92,19 @@ class Region:
             raise GZipChunkData('GZip is not supported')
 
         compressed_data = self.data[off + 5 : off + 5 + length - 1]
-        return nbt.NBTFile(buffer=BytesIO(zlib.decompress(compressed_data)))
+        decompressed_data = zlib.decompress(compressed_data)
+
+        try:
+            nbt_data = nbt.NBTFile(buffer=BytesIO(decompressed_data))
+        except UnicodeDecodeError as e:
+            # with open("corrupted.nbt", "wb") as corrupted_nbt_data:
+            #     corrupted_nbt_data.write(decompressed_data)
+                
+            raise CorruptedData({'message':'Failed to read decompressed NBT data with UnicodeDecodeError','data':decompressed_data})
+        except Exception as e:
+            raise CorruptedData({'message':'Failed to read decompressed NBT data','data':decompressed_data})
+
+        return nbt_data
 
     def get_chunk(self, chunk_x: int, chunk_z: int) -> 'anvil.Chunk':
         """

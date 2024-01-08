@@ -17,3 +17,8 @@ class EmptyRegionFile(Exception):
 
 class GZipChunkData(Exception):
     """Exception used when trying to get chunk data compressed in gzip"""
+
+class CorruptedData(Exception):
+    """
+    Exception used when trying to read corrupted data
+    """
