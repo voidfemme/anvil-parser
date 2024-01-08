@@ -265,8 +265,15 @@ class Chunk:
 
         if self.version >= _VERSION_21w39a:
             block_states_tag = 'block_states'
+            palette_parent = section[block_states_tag]
         else:
             block_states_tag = 'BlockStates'
+            palette_parent = section
+
+        if self.version >= _VERSION_21w43a:
+            palette_tag = 'palette'
+        else:
+            palette_tag = 'Palette'
 
         # If its an empty section its most likely an air block
         # print("Section: %s" % section)
@@ -275,7 +282,7 @@ class Chunk:
 
         # Number of bits each block is on BlockStates
         # Cannot be lower than 4
-        bits = max((len(section[block_states_tag]) - 1).bit_length(), 4)
+        bits = max((len(section[block_states_tag][palette_tag]) - 1).bit_length(), 4)
 
         # Get index on the block list with the order YZX
         index = y * 16*16 + z * 16 + x
@@ -337,18 +344,6 @@ class Chunk:
         # get `bits` least significant bits
         # which are the palette index
         palette_id = shifted_data & 2**bits - 1
-
-        if self.version >= _VERSION_21w39a:
-            block_states_tag = 'block_states'
-            palette_parent = section[block_states_tag]
-        else:
-            block_states_tag = 'BlockStates'
-            palette_parent = section
-
-        if self.version >= _VERSION_21w43a:
-            palette_tag = 'palette'
-        else:
-            palette_tag = 'Palette'
 
         # print("Block: %s" % palette_parent[palette_tag][palette_id])
         block = palette_parent[palette_tag][palette_id]
