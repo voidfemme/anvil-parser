@@ -40,10 +40,19 @@ _VERSION_21w15a = 2709
 # Build height limit increased to 384 blocks (-64 to 319)
 _VERSION_21w06a = 2694
 
+# Entity Format Changed - https://minecraft.wiki/w/Java_Edition_20w45a
+# Moved entity data to its own folder from terrain data
+_VERSION_20w45a = 2681
+
 # Block Storage Format Changed - https://minecraft.wiki/w/Java_Edition_20w17a
 # This version removes block state value stretching from the storage
 # so a block value isn't in multiple elements of the array
 _VERSION_20w17a = 2529
+
+# Added POI Folder - https://minecraft.wiki/w/Java_Edition_19w11a
+# Villages and other points of interest are now in a poi folder
+#   instead of being in its own separate files
+_VERSION_19w11a = 1937
 
 # Block Format Changed - https://minecraft.wiki/w/Java_Edition_17w47a
 # This is the version where "The Flattening" (https://minecraft.wiki/w/Java_Edition_1.13/Flattening) happened
