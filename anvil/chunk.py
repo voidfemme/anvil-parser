@@ -7,46 +7,46 @@ import math
 
 # Last Checked Version: 1.20.2-rc2
 # ----------------------------------------------------------------------------------------------------
-# Data Versions - https://minecraft.fandom.com/wiki/Data_version
-# Anvil Format - https://minecraft.fandom.com/wiki/Anvil_file_format
-# Chunk Format - https://minecraft.fandom.com/wiki/Chunk_format
+# Data Versions - https://minecraft.wiki/w/Data_version
+# Anvil Format - https://minecraft.wiki/w/Anvil_file_format
+# Chunk Format - https://minecraft.wiki/w/Chunk_format
 # ----------------------------------------------------------------------------------------------------
-# NBT Format - https://minecraft.fandom.com/wiki/NBT_format
-# Entity Format - https://minecraft.fandom.com/wiki/Entity_format
-# Player.dat Format - https://minecraft.fandom.com/wiki/Player.dat_format (note 23w32a changes the player.dat format)
-# Level.dat Format - https://minecraft.fandom.com/wiki/Java_Edition_level_format#level.dat_format
-# Structure File Format - https://minecraft.fandom.com/wiki/Structure_Block_file_format
-# POI Format - https://minecraft.fandom.com/wiki/Point_of_Interest
-# Villages.dat Format - https://minecraft.fandom.com/wiki/Villages.dat_format
-# Raids.dat Format - https://minecraft.fandom.com/wiki/Raids.dat_format
-# Map Format - https://minecraft.fandom.com/wiki/Map_item_format
-# Servers.dat Format - https://minecraft.fandom.com/wiki/Servers.dat_format
-# Schematic File Format (Unofficial) - https://minecraft.fandom.com/wiki/Schematic_file_format
+# NBT Format - https://minecraft.wiki/w/NBT_format
+# Entity Format - https://minecraft.wiki/w/Entity_format
+# Player.dat Format - https://minecraft.wiki/w/Player.dat_format (note 23w32a changes the player.dat format)
+# Level.dat Format - https://minecraft.wiki/w/Java_Edition_level_format#level.dat_format
+# Structure File Format - https://minecraft.wiki/w/Structure_Block_file_format
+# POI Format - https://minecraft.wiki/w/Point_of_Interest
+# Villages.dat Format - https://minecraft.wiki/w/Villages.dat_format
+# Raids.dat Format - https://minecraft.wiki/w/Raids.dat_format
+# Map Format - https://minecraft.wiki/w/Map_item_format
+# Servers.dat Format - https://minecraft.wiki/w/Servers.dat_format
+# Schematic File Format (Unofficial) - https://minecraft.wiki/w/Schematic_file_format
 
 
-# Chunk Format Changed - https://minecraft.fandom.com/wiki/Java_Edition_21w43a
+# Chunk Format Changed - https://minecraft.wiki/w/Java_Edition_21w43a
 # Removed the Level tag and moved everything up a level (e.g. Level.TileEntities to block_entities)
 _VERSION_21w43a = 2844
 
-# Chunk Format Changed - https://minecraft.fandom.com/wiki/Java_Edition_21w39a
+# Chunk Format Changed - https://minecraft.wiki/w/Java_Edition_21w39a
 # Chunk tags were renamed and had their data type changed too (e.g. BlockStates to block_states)
 _VERSION_21w39a = 2836
 
-# Build Height Limit Decrease - https://minecraft.fandom.com/wiki/Java_Edition_21w15a
+# Build Height Limit Decrease - https://minecraft.wiki/w/Java_Edition_21w15a
 # Build height limit reverted back to 256 blocks (0 to 255) from version 21w06a
 _VERSION_21w15a = 2709
 
-# Build Height Limit Increase - https://minecraft.fandom.com/wiki/Java_Edition_21w06a
+# Build Height Limit Increase - https://minecraft.wiki/w/Java_Edition_21w06a
 # Build height limit increased to 384 blocks (-64 to 319)
 _VERSION_21w06a = 2694
 
-# Block Storage Format Changed - https://minecraft.fandom.com/wiki/Java_Edition_20w17a
+# Block Storage Format Changed - https://minecraft.wiki/w/Java_Edition_20w17a
 # This version removes block state value stretching from the storage
 # so a block value isn't in multiple elements of the array
 _VERSION_20w17a = 2529
 
-# Block Format Changed - https://minecraft.fandom.com/wiki/Java_Edition_17w47a
-# This is the version where "The Flattening" (https://minecraft.gamepedia.com/Java_Edition_1.13/Flattening) happened
+# Block Format Changed - https://minecraft.wiki/w/Java_Edition_17w47a
+# This is the version where "The Flattening" (https://minecraft.wiki/w/Java_Edition_1.13/Flattening) happened
 # where blocks went from numeric ids to namespaced ids (namespace:block_id)
 _VERSION_17w47a = 1451
 
@@ -90,8 +90,12 @@ class Chunk:
         Version of the chunk NBT structure
     data: :class:`nbt.TAG_Compound`
         Raw NBT data of the chunk
+    guessed_type: :class:`string`
+        The guess for the type of chunk data we're looking at
     block_entities: :class:`nbt.TAG_Compound`
         ``self.data['TileEntities']`` as an attribute for easier use (or ``self.data['block_entities']`` if chunk's world's version is at least 21w43a)
+    entities: :class:`nbt.TAG_Compound`
+        ``self.data['Entities']`` as an attribute for easier use (or ``self.data['block_entities']`` if chunk's world's version is at least 21w43a)
     """
     __slots__ = ('version', 'data', 'x', 'z', 'lowest_y', 'highest_y', 'block_entities', 'tile_entities')
 
@@ -100,25 +104,51 @@ class Chunk:
             self.version = nbt_data['DataVersion'].value
         except KeyError:
             # Version is pre-1.9 snapshot 15w32a, so world does not have a Data Version.
-            # See https://minecraft.fandom.com/wiki/Data_version
+            # See https://minecraft.wiki/w/Data_version
             self.version = None
 
-        if self.version >= _VERSION_21w43a:
-            self.data = nbt_data
-            self.tile_entities = self.data['block_entities']
-        else:
-            self.data = nbt_data['Level']
-            self.tile_entities = self.data['TileEntities']
-
-        # to match the rename. we aren't getting rid of tile_entities, just making sure there's a match with the modern term
-        self.block_entities = self.tile_entities
-
+        # Base data expected to be in any region file (citation needed)
         self.x = self.data['xPos'].value
         self.z = self.data['zPos'].value
         self.lowest_y = self.get_lowest_section()
         self.highest_y = self.get_highest_section()
 
+        # Scan for block entity tag and set easy use attributes
+        self.init_block_entities(nbt_data=nbt_data)
+
         # print("(X: %s, Z: %s, L: %s, H: %s)" % (self.x, self.z, self.lowest_y, self.highest_y))
+
+    def init_block_entities(self, nbt_data: nbt.NBTFile):
+        # We may be reading a chunk that holds entities or something else,
+        #   so block entities may not exist in this data
+        try:
+            if self.version >= _VERSION_21w43a:
+                self.data = nbt_data
+                self.tile_entities = self.data['block_entities']
+            else:
+                self.data = nbt_data['Level']
+                self.tile_entities = self.data['TileEntities']
+        except KeyError:
+            # We're reading something without block entities
+            self.tile_entities = None
+
+        # to match the rename. we aren't getting rid of tile_entities, just making sure there's a match with the modern term
+        self.block_entities = self.tile_entities
+
+    def init_entities(self, nbt_data: nbt.NBTFile):
+        try:
+            if self.version >= _VERSION_21w43a:
+                self.data = nbt_data
+                self.tile_entities = self.data['block_entities']
+            else:
+                self.data = nbt_data['Level']
+                self.tile_entities = self.data['TileEntities']
+        except KeyError:
+            # We're reading something without block entities
+            self.tile_entities = None
+
+        # to match the rename. we aren't getting rid of tile_entities, just making sure there's a match with the modern term
+        self.block_entities = self.tile_entities
 
     def get_lowest_section(self) -> int:
         try:
