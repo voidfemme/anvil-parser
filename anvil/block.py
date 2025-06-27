@@ -1,3 +1,4 @@
+from __future__ import annotations
 from nbt import nbt
 from frozendict import frozendict
 from .legacy import LEGACY_ID_MAP
@@ -17,7 +18,7 @@ class Block:
     """
     __slots__ = ('namespace', 'id', 'properties')
 
-    def __init__(self, namespace: str, block_id: str=None, properties: dict=None):
+    def __init__(self, namespace: str, block_id: str | None = None, properties: dict | None = None):
         """
         Parameters
         ----------
@@ -138,7 +139,7 @@ class OldBlock:
     def __eq__(self, other):
         if isinstance(other, int):
             return self.id == other
-        elif not isinstance(other, Block):
+        elif not isinstance(other, OldBlock):
             return False
         else:
             return self.id == other.id and self.data == other.data

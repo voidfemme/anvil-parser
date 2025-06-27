@@ -28,11 +28,11 @@ class EmptyRegion:
     __slots__ = ('chunks', 'x', 'z')
     def __init__(self, x: int, z: int):
         # Create a 1d list for the 32x32 chunks
-        self.chunks: List[EmptyChunk] = [None] * 1024
+        self.chunks: List[EmptyChunk | None] = [None] * 1024
         self.x = x
         self.z = z
 
-    def inside(self, x: int, y: int, z: int, chunk: bool=False) -> bool:
+    def inside(self, x: int, _: int, z: int, chunk: bool=False) -> bool:
         """
         Returns if the given coordinates are inside this region
         
@@ -52,7 +52,7 @@ class EmptyRegion:
         # Anvil has always allowed custom world heights
         # return not (rx != self.x or rz != self.z or y < 0 or y > 255)
 
-    def get_chunk(self, x: int, z: int) -> EmptyChunk:
+    def get_chunk(self, x: int, z: int) -> EmptyChunk | None:
         """
         Returns the chunk at given chunk coordinates
         
@@ -184,7 +184,7 @@ class EmptyRegion:
             if not self.inside(x1, y1, z1):
                 raise OutOfBoundsCoordinates(f'First coords ({x1}, {y1}, {z1}) is not inside this region')
             if not self.inside(x2, y2, z2):
-                raise OutOfBoundsCoordinates(f'Second coords ({x}, {y}, {z}) is not inside this region')
+                raise OutOfBoundsCoordinates(f'Second coords ({x2}, {y2}, {z2}) is not inside this region')
 
         for y in from_inclusive(y1, y2):
             for z in from_inclusive(z1, z2):
@@ -194,7 +194,7 @@ class EmptyRegion:
                     else:
                         self.set_block(block, x, y, z)
 
-    def save(self, file: Union[str, BinaryIO]=None) -> bytes:
+    def save(self, file: Union[str, BinaryIO] | None = None) -> bytes:
         """
         Returns the region as bytes with
         the anvil file format structure,

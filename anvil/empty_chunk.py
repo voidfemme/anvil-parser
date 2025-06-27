@@ -24,7 +24,7 @@ class EmptyChunk:
     def __init__(self, x: int, z: int):
         self.x = x
         self.z = z
-        self.sections: List[EmptySection] = [None]*16
+        self.sections: List[EmptySection | None] = [None]*16
         self.version = 1976
 
     def add_section(self, section: EmptySection, replace: bool = True):
@@ -47,7 +47,7 @@ class EmptyChunk:
             raise EmptySectionAlreadyExists(f'EmptySection (Y={section.y}) already exists in this chunk')
         self.sections[section.y] = section
 
-    def get_block(self, x: int, y: int, z: int) -> Block:
+    def get_block(self, x: int, y: int, z: int) -> Block | None:
         """
         Gets the block at given coordinates
         
@@ -79,7 +79,7 @@ class EmptyChunk:
 
         section = self.sections[y // 16]
         if section is None:
-            return
+            return None
         return section.get_block(x, y % 16, z)
 
     def set_block(self, block: Block, x: int, y: int, z: int):
@@ -145,7 +145,7 @@ class EmptyChunk:
                 p = s.palette()
                 # Minecraft does not save sections that are just air
                 # So we can just skip them
-                if len(p) == 1 and p[0].name() == 'minecraft:air':
+                if len(p) == 1 and p[0] and p[0].name() == 'minecraft:air':
                     continue
                 sections.tags.append(s.save())
         level.tags.append(sections)
