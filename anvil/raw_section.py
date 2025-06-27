@@ -1,14 +1,11 @@
-from typing import List, Tuple, Sequence, Iterable
-from . import EmptySection, Block
-from .errors import OutOfBoundsCoordinates
+from typing import Sequence, Iterable
+
+from .utils import bin_append
+from . import Block
+from .base_section import BaseSection
 import array
-from nbt import nbt
 
-def bin_append(a, b, length=None):
-    length = length or b.bit_length()
-    return (a << length) | b
-
-class RawSection:
+class RawSection(BaseSection):
     """
     Same as :class:`EmptySection` but you manually
     set the palette and the blocks array (which instead
@@ -25,15 +22,15 @@ class RawSection:
     """
     __slots__ = ('y', '_palette', 'blocks')
     def __init__(self, y: int, blocks: Iterable[int], palette: Sequence[Block]):
-        self.y = y
+        super().__init__(y)
         self.blocks: Iterable[int] = blocks
         self._palette: Sequence[Block] = palette
 
-    def palette(self) -> Sequence[Block]:
+    def palette(self) -> tuple[Block | None, ...]:
         """Returns ``self._palette``"""
-        return self._palette
+        return tuple(self._palette)
 
-    def blockstates(self, palette: Sequence[Block]=None) -> array.array:
+    def blockstates(self, palette: tuple[Block | None, ...] | None = None) -> array.array:
         """Refer to :class:`EmptySection.blockstates()`"""
         bits = max((len(self._palette) - 1).bit_length(), 4)
         states = array.array('Q')
@@ -50,7 +47,3 @@ class RawSection:
                 current_len += bits
         states.append(current)
         return states
-
-    def save(self) -> nbt.TAG_Compound:
-        """Refer to :class:`EmptySection.save()`"""
-        return EmptySection.save(self)

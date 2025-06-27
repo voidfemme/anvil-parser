@@ -1,9 +1,9 @@
-from typing import Union, Tuple, Generator, Optional
+from typing import Union, Tuple, Generator
 from nbt import nbt
 from .block import Block, OldBlock
 from .region import Region
 from .errors import OutOfBoundsCoordinates, ChunkNotFound, EmptyRegionFile
-import math
+from .utils import bin_append, nibble
 
 # Last Checked Version: 1.20.2-rc2
 # ----------------------------------------------------------------------------------------------------
@@ -64,21 +64,6 @@ _VERSION_17w47a = 1451
 # Data versions were introduced with 15w32a (1.9 snapshot) and started at 100
 # _VERSION_12w07a = -1
 
-def bin_append(a, b, length=None):
-    """
-    Appends number a to the left of b
-    bin_append(0b1, 0b10) = 0b110
-    """
-    length = length or b.bit_length()
-    return (a << length) | b
-
-def nibble(byte_array, index):
-    value = byte_array[index // 2]
-    if index % 2:
-        return value >> 4
-    else:
-        return value & 0b1111
-
 class Chunk:
     """
     Represents a chunk from a ``.mca`` file.
@@ -116,13 +101,17 @@ class Chunk:
             # See https://minecraft.wiki/w/Data_version
             self.version = None
 
+        self.data = nbt_data
+
         # Base data expected to be in any region file (citation needed)
-        self.x = self.data['xPos'].value
-        self.z = self.data['zPos'].value
+        self.x = self.data['Level']['xPos'].value
+        self.z = self.data['Level']['zPos'].value
         self.lowest_y = self.get_lowest_section()
         self.highest_y = self.get_highest_section()
 
         # Scan for block entity tag and set easy use attributes
+        self.tile_entities: nbt.TAG_List | None = None
+        self.block_entities: nbt.TAG_List | None = None
         self.init_block_entities(nbt_data=nbt_data)
 
         # print("(X: %s, Z: %s, L: %s, H: %s)" % (self.x, self.z, self.lowest_y, self.highest_y))
@@ -131,7 +120,7 @@ class Chunk:
         # We may be reading a chunk that holds entities or something else,
         #   so block entities may not exist in this data
         try:
-            if self.version >= _VERSION_21w43a:
+            if self.version and self.version >= _VERSION_21w43a:
                 self.data = nbt_data
                 self.tile_entities = self.data['block_entities']
             else:
@@ -146,7 +135,7 @@ class Chunk:
 
     def init_entities(self, nbt_data: nbt.NBTFile):
         try:
-            if self.version >= _VERSION_21w43a:
+            if self.version and self.version >= _VERSION_21w43a:
                 self.data = nbt_data
                 self.tile_entities = self.data['block_entities']
             else:
@@ -159,16 +148,16 @@ class Chunk:
         # to match the rename. we aren't getting rid of tile_entities, just making sure there's a match with the modern term
         self.block_entities = self.tile_entities
 
-    def get_lowest_section(self) -> int:
+    def get_lowest_section(self) -> int | None:
         try:
-            if self.version >= _VERSION_21w43a:
+            if self.version and self.version >= _VERSION_21w43a:
                 sections = self.data['sections']
             else:
                 sections = self.data['Sections']
         except KeyError:
             return None
 
-        if self.version >= _VERSION_21w43a:
+        if self.version and self.version >= _VERSION_21w43a:
             return self.data['yPos'].value
 
         if len(sections) < 1:
@@ -176,9 +165,9 @@ class Chunk:
         
         return sections[0]['Y'].value
 
-    def get_highest_section(self) -> int:
+    def get_highest_section(self) -> int | None:
         try:
-            if self.version >= _VERSION_21w43a:
+            if self.version and self.version >= _VERSION_21w43a:
                 sections = self.data['sections']
             else:
                 sections = self.data['Sections']
@@ -190,7 +179,7 @@ class Chunk:
 
         return sections[-1]['Y'].value
 
-    def get_section(self, y: int) -> nbt.TAG_Compound:
+    def get_section(self, y: int) -> nbt.TAG_Compound | None:
         """
         Returns the section at given y index
         can also return nothing if section is missing, aka it's empty
@@ -205,13 +194,13 @@ class Chunk:
         anvil.OutOfBoundsCoordinates
             If Y is not in range of self.lowest_y to self.highest_y
         """
-        if y < self.lowest_y or y > self.highest_y:
+        if (self.lowest_y and y < self.lowest_y) or (self.highest_y and y > self.highest_y):
             raise OutOfBoundsCoordinates(f'Y ({y!r}) must be in range of {self.lowest_y!r} to {self.highest_y!r}')
 
         try:
             # print("Data: %s" % self.data)
 
-            if self.version >= _VERSION_21w43a:
+            if self.version and self.version >= _VERSION_21w43a:
                 sections = self.data['sections']
             else:
                 sections = self.data['Sections']
@@ -222,7 +211,7 @@ class Chunk:
             if section['Y'].value == y:
                 return section
 
-    def get_palette(self, section: Union[int, nbt.TAG_Compound]) -> Tuple[Block]:
+    def get_palette(self, section: Union[int, nbt.TAG_Compound]) -> Tuple[Block, ...] | None:
         """
         Returns the block palette for given section
 
@@ -236,15 +225,15 @@ class Chunk:
         if isinstance(section, int):
             section = self.get_section(section)
         if section is None:
-            return
+            return None
 
         # print("Section: %s" % section)
-        if self.version >= _VERSION_21w39a:
+        if self.version and self.version >= _VERSION_21w39a:
             palette_parent = section['block_states']
         else:
             palette_parent = section
 
-        if self.version >= _VERSION_21w43a:
+        if self.version and self.version >= _VERSION_21w43a:
             palette_tag = 'palette'
         else:
             palette_tag = 'Palette'
@@ -252,7 +241,7 @@ class Chunk:
         # print("palette_parent: %s" % palette_parent)
         return tuple(Block.from_palette(i) for i in palette_parent[palette_tag])
 
-    def get_block(self, x: int, y: int, z: int, section: Union[int, nbt.TAG_Compound]=None, force_new: bool=False) -> Union[Block, OldBlock]:
+    def get_block(self, x: int, y: int, z: int, section: Union[int, nbt.TAG_Compound] | None = None, force_new: bool=False) -> Union[Block, OldBlock] | None:
         """
         Returns the block in the given coordinates
 
@@ -274,12 +263,14 @@ class Chunk:
 
         :rtype: :class:`anvil.Block`
         """
+        lowest_bound = self.lowest_y * 16 if self.lowest_y is not None else float('-inf')
+        highest_bound = self.highest_y * 16 if self.highest_y is not None else float('inf')
         if x < 0 or x > 15:
             raise OutOfBoundsCoordinates(f'X ({x!r}) must be in range of 0 to 15')
         if z < 0 or z > 15:
             raise OutOfBoundsCoordinates(f'Z ({z!r}) must be in range of 0 to 15')
-        if y < self.lowest_y*16 or y > (self.highest_y*16)+15:
-            raise OutOfBoundsCoordinates(f'Y ({y!r}) must be in range of {self.lowest_y*16!r} to {(self.highest_y*16)+15!r}')
+        if y < lowest_bound or y > highest_bound:
+            raise OutOfBoundsCoordinates(f'Y ({y!r}) must be in range of {lowest_bound!r} to {highest_bound!r}')
 
         if section is None:
             section = self.get_section(y // 16)
@@ -288,11 +279,20 @@ class Chunk:
 
         if self.version is None or self.version < _VERSION_17w47a:
             # Explained in depth here https://minecraft.gamepedia.com/index.php?title=Chunk_format&oldid=1153403#Block_format
-            if section is None or 'Blocks' not in section:
+            if section is None:
                 if force_new:
                     return Block.from_name('minecraft:air')
                 else:
                     return OldBlock(0)
+
+            # Handle case where section is an int
+            if isinstance(section, int):
+                section = self.get_section(section)
+                if section is None:
+                    if force_new:
+                        return Block.from_name('minecraft:air')
+                    else:
+                        return OldBlock(0)
 
             index = y * 16 * 16 + z * 16 + x
 
@@ -308,8 +308,15 @@ class Chunk:
             else:
                 return block
 
+        # Convert int section index to actual section
+        if isinstance(section, int):
+            section = self.get_section(section)
+
+        if section is None:
+            return None
+
+        block_states_tag = 'block_states'
         if self.version >= _VERSION_21w39a:
-            block_states_tag = 'block_states'
             palette_parent = section[block_states_tag]
         else:
             block_states_tag = 'BlockStates'
@@ -337,7 +344,8 @@ class Chunk:
 
         # BlockStates is an array of 64 bit numbers
         # that holds the blocks index on the palette list
-        # TODO: Confirm 21w39a is actually the version that block_states was moved to 'data'
+        # Confirmed: 21w39a moved BlockStates & Palette to block_states container structure
+        # Source: https://feedback.minecraft.net/hc/en-us/articles/4410294651405-Minecraft-Java-Edition-Snapshot-21w39a
         if self.version >= _VERSION_21w39a:
             # If its an empty section its most likely an air block
             if 'data' not in section[block_states_tag]:
@@ -397,7 +405,13 @@ class Chunk:
         block = palette_parent[palette_tag][palette_id]
         return Block.from_palette(block)
 
-    def stream_blocks(self, index: int=0, section: Union[int, nbt.TAG_Compound]=None, force_new: bool=False) -> Generator[Block, None, None]:
+    def stream_blocks(
+            self, 
+            index: 
+            int=0, 
+            section: Union[int, nbt.TAG_Compound] | None = None, 
+            force_new: bool=False
+    ) -> Generator[Block | OldBlock, None, None]:
         """
         Returns a generator for all the blocks in given section
 
@@ -432,10 +446,10 @@ class Chunk:
         if section is None or isinstance(section, int):
             section = self.get_section(section or 0)
 
-        if self.version < _VERSION_17w47a:
+        if self.version and self.version < _VERSION_17w47a:
             if section is None or 'Blocks' not in section:
                 air = Block.from_name('minecraft:air') if force_new else OldBlock(0)
-                for i in range(4096):
+                for _ in range(4096):
                     yield air
                 return
 
@@ -455,21 +469,28 @@ class Chunk:
                 index += 1
             return
 
-        if self.version >= _VERSION_21w39a:
+        # Convert int section index to actual section
+        if isinstance(section, int):
+            section = self.get_section(section)
+
+        if section is None:
+            return None
+
+        if self.version and self.version >= _VERSION_21w39a:
             block_states_tag = 'block_states'
             palette_parent = section[block_states_tag]
         else:
             block_states_tag = 'BlockStates'
             palette_parent = section
 
-        if self.version >= _VERSION_21w43a:
+        if self.version and self.version >= _VERSION_21w43a:
             palette_tag = 'palette'
         else:
             palette_tag = 'Palette'
 
         if section is None or block_states_tag not in section:
             air = Block.from_name('minecraft:air')
-            for i in range(4096):
+            for _ in range(4096):
                 yield air
             return
 
@@ -478,7 +499,10 @@ class Chunk:
 
         bits = max((len(palette) - 1).bit_length(), 4)
 
-        stretches = self.version < _VERSION_20w17a
+        if self.version:
+            stretches = self.version < _VERSION_20w17a
+        else:
+            stretches = None
 
         if stretches:
             state = index * bits // 64
@@ -522,7 +546,7 @@ class Chunk:
             data >>= bits
             data_len -= bits
 
-    def stream_chunk(self, index: int=0, section: Union[int, nbt.TAG_Compound]=None) -> Generator[Block, None, None]:
+    def stream_chunk(self, _: int=0 , section: Union[int, nbt.TAG_Compound] | None = None) -> Generator[Block | OldBlock, None, None]:
         """
         Returns a generator for all the blocks in the chunk
 
@@ -532,23 +556,27 @@ class Chunk:
         ------
         :class:`anvil.Block`
         """
-        for section in range(self.lowest_y, self.highest_y):
+        lower_bound = self.lowest_y if self.lowest_y else int('-inf')
+        upper_bound = self.highest_y if self.highest_y else int('inf')
+        for section in range(lower_bound, upper_bound):
             for block in self.stream_blocks(section=section):
                 yield block
 
-    def get_tile_entity(self, x: int, y: int, z: int) -> Optional[nbt.TAG_Compound]:
+    def get_tile_entity(self, x: int, y: int, z: int) -> nbt.TAG_Compound | None:
         return self.get_block_entity(x, y, z)
 
-    def get_block_entity(self, x: int, y: int, z: int) -> Optional[nbt.TAG_Compound]:
+    def get_block_entity(self, x: int, y: int, z: int) -> nbt.TAG_Compound | None:
         """
         Returns the block entity at given coordinates, or ``None`` if there isn't a block entity
 
         To iterate through all block entities in the chunk, use :class:`Chunk.block_entities`
         """
-        for block_entity in self.block_entities:
-            b_x, b_y, b_z = [block_entity[k].value for k in 'xyz']
-            if x == b_x and y == b_y and z == b_z:
-                return block_entity
+        if self.block_entities:
+            for block_entity in self.block_entities:
+                b_x, b_y, b_z = [block_entity[k].value for k in 'xyz']
+                if x == b_x and y == b_y and z == b_z:
+                    return block_entity
+        return None
 
     @classmethod
     def from_region(cls, region: Union[str, Region], chunk_x: int, chunk_z: int):
