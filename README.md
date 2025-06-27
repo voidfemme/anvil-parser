@@ -1,20 +1,26 @@
 # anvil-parser
-
-[![CodeFactor](https://www.codefactor.io/repository/github/matcool/anvil-parser/badge/master)](https://www.codefactor.io/repository/github/matcool/anvil-parser/overview/master)
+[![CodeFactor](https://www.codefactor.io/repository/github/lexi-the-cute/anvil-parser/badge/master)](https://www.codefactor.io/repository/github/lexi-the-cute/anvil-parser/overview/master)
 [![Documentation Status](https://readthedocs.org/projects/anvil-parser/badge/?version=latest)](https://anvil-parser.readthedocs.io/en/latest/?badge=latest)
-[![Tests](https://github.com/matcool/anvil-parser/actions/workflows/run-pytest.yml/badge.svg)](https://github.com/matcool/anvil-parser/actions/workflows/run-pytest.yml)
+[![Tests](https://github.com/lexi-the-cute/anvil-parser/actions/workflows/run-pytest.yml/badge.svg)](https://github.com/lexi-the-cute/anvil-parser/actions/workflows/run-pytest.yml)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/anvil-parser)](https://pypi.org/project/anvil-parser/)
 
 Simple parser for the [Minecraft anvil file format](https://minecraft.gamepedia.com/Anvil_file_format)
+
 # Installation
-This project is available on [PyPI](https://pypi.org/project/anvil-parser/) and can be installed with pip
+This is a fork of the original anvil-parser with modern type annotations and improvements.
+
+Install directly from this GitHub repository:
+```bash
+pip install git+https://github.com/lexi-the-cute/anvil-parser.git
 ```
-pip install anvil-parser
+
+Or clone and install locally:
+```bash
+git clone https://github.com/lexi-the-cute/anvil-parser.git
+cd anvil-parser
+pip install -e
 ```
-or directly from github
-```
-pip install git+https://github.com/matcool/anvil-parser.git
-```
+
 # Usage
 ## Reading
 ```python
@@ -33,6 +39,7 @@ print(block) # <Block(minecraft:air)>
 print(block.id) # air
 print(block.properties) # {}
 ```
+
 ## Making own regions
 ```python
 import anvil
@@ -54,6 +61,21 @@ for y in range(16):
 # Save to a file
 region.save('r.0.0.mca')
 ```
+
+# Requirements
+- Python 3.10+ (for modern type annotation syntax)
+- NBT >= 1.5.1
+- frozendict >= 2.3.0
+
+# Changes from Original
+This fork includes the following improvements:
+- Modern Python type annotations using `X | None` syntax
+- Enhanced null safety throughout the codebase
+- Bug fixes in block comparison methods
+- Improved code organization with base classes
+- Python 3.13 compatibility
+- Updated dependencies
+
 # Todo
 *things to do before 1.0.0*
 - [x] Proper documentation
@@ -61,5 +83,6 @@ region.save('r.0.0.mca')
 - [x] CI
 - [ ] More tests
   - [ ] Tests for 20w17a+ BlockStates format
+
 # Note
 Testing done in 1.14.4 and 1.15.2, should work fine for other versions.
