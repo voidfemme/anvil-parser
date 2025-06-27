@@ -1,4 +1,4 @@
-from typing import Sequence, Iterable
+from collections.abc import Sequence, Iterable
 
 from .utils import bin_append
 from . import Block
@@ -32,6 +32,7 @@ class RawSection(BaseSection):
 
     def blockstates(self, palette: tuple[Block | None, ...] | None = None) -> array.array:
         """Refer to :class:`EmptySection.blockstates()`"""
+        _ = palette
         bits = max((len(self._palette) - 1).bit_length(), 4)
         states = array.array('Q')
         current = 0

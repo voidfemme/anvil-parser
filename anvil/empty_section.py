@@ -1,7 +1,7 @@
 from . import Block
 from .errors import OutOfBoundsCoordinates
-from .utils import _update_fmt, bin_append
 from .base_section import BaseSection
+from .utils import _update_fmt, bin_append
 from nbt import nbt
 import array
 

@@ -1,7 +1,8 @@
-from typing import Union, List, BinaryIO
+from typing import BinaryIO
 from .empty_chunk import EmptyChunk
 from .chunk import Chunk
 from .empty_section import EmptySection
+from .raw_section import RawSection
 from .block import Block
 from .errors import OutOfBoundsCoordinates
 from io import BytesIO
@@ -20,15 +21,15 @@ class EmptyRegion:
     
     Attributes
     ----------
-    chunks: List[:class:`anvil.EmptyChunk`]
-        List of chunks in this region
+    chunks: list[:class:`anvil.EmptyChunk`]
+        list of chunks in this region
     x: :class:`int`
     z: :class:`int`
     """
     __slots__ = ('chunks', 'x', 'z')
     def __init__(self, x: int, z: int):
         # Create a 1d list for the 32x32 chunks
-        self.chunks: List[EmptyChunk | None] = [None] * 1024
+        self.chunks: list[EmptyChunk | None] = [None] * 1024
         self.x = x
         self.z = z
 
@@ -90,7 +91,7 @@ class EmptyRegion:
             raise OutOfBoundsCoordinates(f'Chunk ({chunk.x}, {chunk.z}) is not inside this region')
         self.chunks[chunk.z % 32 * 32 + chunk.x % 32] = chunk
 
-    def add_section(self, section: EmptySection, x: int, z: int, replace: bool=True):
+    def add_section(self, section: EmptySection | RawSection, x: int, z: int, replace: bool=True):
         """
         Adds section to chunk at (x, z).
         Same as ``EmptyChunk.add_section(section)``
@@ -194,7 +195,7 @@ class EmptyRegion:
                     else:
                         self.set_block(block, x, y, z)
 
-    def save(self, file: Union[str, BinaryIO] | None = None) -> bytes:
+    def save(self, file: str | BinaryIO | None = None) -> bytes:
         """
         Returns the region as bytes with
         the anvil file format structure,

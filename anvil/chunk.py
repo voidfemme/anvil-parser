@@ -1,4 +1,4 @@
-from typing import Union, Tuple, Generator
+from collections.abc import Generator
 from nbt import nbt
 from .block import Block, OldBlock
 from .region import Region
@@ -211,7 +211,7 @@ class Chunk:
             if section['Y'].value == y:
                 return section
 
-    def get_palette(self, section: Union[int, nbt.TAG_Compound]) -> Tuple[Block, ...] | None:
+    def get_palette(self, section: int | nbt.TAG_Compound) -> tuple[Block, ...] | None:
         """
         Returns the block palette for given section
 
@@ -220,7 +220,7 @@ class Chunk:
         section
             Either a section NBT tag or an index
 
-        :rtype: Tuple[:class:`anvil.Block`]
+        :rtype: tuple[:class:`anvil.Block`]
         """
         if isinstance(section, int):
             section = self.get_section(section)
@@ -241,7 +241,7 @@ class Chunk:
         # print("palette_parent: %s" % palette_parent)
         return tuple(Block.from_palette(i) for i in palette_parent[palette_tag])
 
-    def get_block(self, x: int, y: int, z: int, section: Union[int, nbt.TAG_Compound] | None = None, force_new: bool=False) -> Union[Block, OldBlock] | None:
+    def get_block(self, x: int, y: int, z: int, section: int | nbt.TAG_Compound | None = None, force_new: bool=False) -> Block | OldBlock | None:
         """
         Returns the block in the given coordinates
 
@@ -407,10 +407,9 @@ class Chunk:
 
     def stream_blocks(
             self, 
-            index: 
-            int=0, 
-            section: Union[int, nbt.TAG_Compound] | None = None, 
-            force_new: bool=False
+            index: int = 0, 
+            section: int | nbt.TAG_Compound | None = None, 
+            force_new: bool = False
     ) -> Generator[Block | OldBlock, None, None]:
         """
         Returns a generator for all the blocks in given section
@@ -546,7 +545,7 @@ class Chunk:
             data >>= bits
             data_len -= bits
 
-    def stream_chunk(self, _: int=0 , section: Union[int, nbt.TAG_Compound] | None = None) -> Generator[Block | OldBlock, None, None]:
+    def stream_chunk(self, index: int = 0) -> Generator[Block | OldBlock, None, None]:
         """
         Returns a generator for all the blocks in the chunk
 
@@ -556,10 +555,11 @@ class Chunk:
         ------
         :class:`anvil.Block`
         """
-        lower_bound = self.lowest_y if self.lowest_y else int('-inf')
-        upper_bound = self.highest_y if self.highest_y else int('inf')
-        for section in range(lower_bound, upper_bound):
-            for block in self.stream_blocks(section=section):
+        lower_bound = self.lowest_y if self.lowest_y else 0
+        upper_bound = self.highest_y if self.highest_y else 15
+
+        for section_y in range(lower_bound, upper_bound + 1):
+            for block in self.stream_blocks(index=index, section=section_y):
                 yield block
 
     def get_tile_entity(self, x: int, y: int, z: int) -> nbt.TAG_Compound | None:
@@ -579,7 +579,7 @@ class Chunk:
         return None
 
     @classmethod
-    def from_region(cls, region: Union[str, Region], chunk_x: int, chunk_z: int):
+    def from_region(cls, region: str | Region, chunk_x: int, chunk_z: int):
         """
         Creates a new chunk from region and the chunk's X and Z
 

@@ -12,7 +12,7 @@ def test_benchmark():
 
     block = Block('iron_block')
 
-    def func(x: int, z: int) -> int:
+    def func(x: float, z: float) -> float:
         return math.sin(x * x + z * z) * 0.5 + 0.5
 
     w = 256
@@ -47,7 +47,7 @@ def test_raw_section():
     air = Block('air')
     palette = (air, block)
 
-    def func(x: int, z: int) -> int:
+    def func(x: float, z: float) -> float:
         return math.sin(x * x + z * z) * 0.5 + 0.5
 
     w = 256

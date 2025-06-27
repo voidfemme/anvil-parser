@@ -1,4 +1,4 @@
-from typing import Tuple, Union, BinaryIO
+from typing import BinaryIO
 from nbt import nbt
 import zlib
 from io import BytesIO
@@ -42,7 +42,7 @@ class Region:
         """
         return 4 * (chunk_x % 32 + chunk_z % 32 * 32)
 
-    def chunk_location(self, chunk_x: int, chunk_z: int) -> Tuple[int, int] | None:
+    def chunk_location(self, chunk_x: int, chunk_z: int) -> tuple[int, int] | None:
         """
         Returns the chunk offset in the 4KiB sectors from the start of the file,
         and the length of the chunk in sectors of 4KiB
@@ -129,7 +129,7 @@ class Region:
         return anvil.Chunk.from_region(self, chunk_x, chunk_z)
 
     @classmethod
-    def from_file(cls, file: Union[str, BinaryIO]):
+    def from_file(cls, file: str | BinaryIO):
         """
         Creates a new region with the data from reading the given file
 
