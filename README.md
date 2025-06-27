@@ -1,7 +1,7 @@
 # anvil-parser
-[![CodeFactor](https://www.codefactor.io/repository/github/lexi-the-cute/anvil-parser/badge/master)](https://www.codefactor.io/repository/github/lexi-the-cute/anvil-parser/overview/master)
+<!--[![CodeFactor](https://www.codefactor.io/repository/github/lexi-the-cute/anvil-parser/badge/master)](https://www.codefactor.io/repository/github/lexi-the-cute/anvil-parser/overview/master)-->
 [![Documentation Status](https://readthedocs.org/projects/anvil-parser/badge/?version=latest)](https://anvil-parser.readthedocs.io/en/latest/?badge=latest)
-[![Tests](https://github.com/lexi-the-cute/anvil-parser/actions/workflows/run-pytest.yml/badge.svg)](https://github.com/lexi-the-cute/anvil-parser/actions/workflows/run-pytest.yml)
+<!--[![Tests](https://github.com/lexi-the-cute/anvil-parser/actions/workflows/run-pytest.yml/badge.svg)](https://github.com/lexi-the-cute/anvil-parser/actions/workflows/run-pytest.yml)-->
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/anvil-parser)](https://pypi.org/project/anvil-parser/)
 
 Simple parser for the [Minecraft anvil file format](https://minecraft.gamepedia.com/Anvil_file_format)
