@@ -1,6 +1,6 @@
-from typing import List
 from .block import Block
 from .empty_section import EmptySection
+from .raw_section import RawSection
 from .errors import OutOfBoundsCoordinates, EmptySectionAlreadyExists
 from nbt import nbt
 
@@ -15,19 +15,19 @@ class EmptyChunk:
         Chunk's X position
     z: :class:`int`
         Chunk's Z position
-    sections: List[:class:`anvil.EmptySection`]
-        List of all the sections in this chunk
+    sections: list[:class:`anvil.EmptySection`]
+        list of all the sections in this chunk
     version: :class:`int`
         Chunk's DataVersion
     """
     __slots__ = ('x', 'z', 'sections', 'version')
-    def __init__(self, x: int, z: int):
+    def __init__(self, x: int, z: int) -> None:
         self.x = x
         self.z = z
-        self.sections: List[EmptySection | None] = [None]*16
+        self.sections: list[EmptySection | None] = [None]*16
         self.version = 1976
 
-    def add_section(self, section: EmptySection, replace: bool = True):
+    def add_section(self, section: EmptySection | RawSection, replace: bool = True) -> None:
         """
         Adds a section to the chunk
 
@@ -82,7 +82,7 @@ class EmptyChunk:
             return None
         return section.get_block(x, y % 16, z)
 
-    def set_block(self, block: Block, x: int, y: int, z: int):
+    def set_block(self, block: Block, x: int, y: int, z: int) -> None:
         """
         Sets block at given coordinates
         
