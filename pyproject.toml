@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anvil-parser-modern"
+version = "0.10.0"
+description = "A Minecraft anvil file format parser"
+authors = [{name = "voidfemme"}]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11", 
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Topic :: Games/Entertainment",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "NBT>=1.5.1",
+    "frozendict>=2.3.0",
+]
+keywords = ["minecraft", "anvil", "mca", "region", "chunk", "nbt"]
+
+[project.urls]
+Homepage = "https://github.com/voidfemme/anvil-parser"
+Repository = "https://github.com/voidfemme/anvil-parser"
+Issues = "https://github.com/voidfemme/anvil-parser/issues"
+# Documentation = "https://anvil-parser.readthedocs.io/"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0.0",
+    "sphinx>=8.0.0",
+    "sphinx-autodoc-typehints>=1.10.3",
+    "sphinxcontrib-trio>=1.1.0",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["anvil*"]
