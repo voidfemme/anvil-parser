@@ -16,9 +16,15 @@ class Region:
         Region file (``.mca``) as bytes
 
     Raises
-        ------
-        anvil.errors.EmptyRegionFile
-            If region file has no data to process
+    ------
+    anvil.errors.EmptyRegionFile
+        If region file has no data to process
+    anvil.errors.GZipChunkData
+        If the chunk uses GZip compression (compression type 1), which is not supported
+    anvil.errors.CorruptedData
+        If the chunk data is corrupted
+    anvil.errors.InvalidFileType
+        If the from_file method receives invalid input
     """
     __slots__ = ('data',)
     def __init__(self, data: bytes):
@@ -40,6 +46,11 @@ class Region:
             Chunk's X value
         chunk_z
             Chunk's Z value
+
+        Returns
+        -------
+        int
+            The byte offset for given chunk in the header
         """
         return 4 * (chunk_x % 32 + chunk_z % 32 * 32)
 
@@ -63,7 +74,7 @@ class Region:
             sectors = self.data[b_off + 3]
             return (off, sectors)
         else:
-            raise EmptyRegionFile('Region file is empty. There\' no data to process')
+            raise EmptyRegionFile('Region file is empty. There\'s no data to process')
 
     def chunk_data(self, chunk_x: int, chunk_z: int) -> nbt.NBTFile | None:
         """
@@ -78,8 +89,12 @@ class Region:
 
         Raises
         ------
-        anvil.GZipChunkData
-            If the chunk's compression is gzip
+        anvil.errors.GZipChunkData
+            If the chunk's compression is 1 (GZip). Only Zlib compression (type 2) is supported
+        anvil.errors.EmptyRegionFile
+            If region file has no data to process
+        anvil.errors.CorruptedData
+            If the chunk data is corrupted or cannot be decoded
         """
         off = self.chunk_location(chunk_x, chunk_z)
 
@@ -138,7 +153,16 @@ class Region:
         ----------
         file
             Either a file path or a file object
+        Raises
+        ------
+        anvil.errors.InvalidFileType
+            If the method receives invalid input 
+        Returns
+        -------
+        anvil.region.Region
+            The region inside the given file
         """
+
         if isinstance(file, (str, Path)):
             with open(file, 'rb') as f:
                 return cls(data=f.read())

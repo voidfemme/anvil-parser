@@ -18,11 +18,11 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'anvil-parser'
-copyright = '2020, mat'
-author = 'mat'
+copyright = '2025, voidfemme'
+author = 'voidfemme'
 
 # The full version, including alpha/beta/rc tags
-release = '0.4.0'
+release = '0.10.0' # Jumped to version 10 because the PyPi package is 0.9.0
 
 
 # -- General configuration ---------------------------------------------------

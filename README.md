@@ -11,7 +11,12 @@ This is a fork of the original anvil-parser with modern type annotations and imp
 
 Install directly from this GitHub repository:
 ```bash
+# Users
 pip install git+https://github.com/voidfemme/anvil-parser.git
+
+# Contributors
+pip install -r requirements-dev.txt
+pip install -e .
 ```
 
 Or clone and install locally:
