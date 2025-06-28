@@ -1,7 +1,7 @@
 # anvil-parser
-<!--[![CodeFactor](https://www.codefactor.io/repository/github/lexi-the-cute/anvil-parser/badge/master)](https://www.codefactor.io/repository/github/lexi-the-cute/anvil-parser/overview/master)-->
+<!--[![CodeFactor](https://www.codefactor.io/repository/github/voidfemme/anvil-parser/badge/master)](https://www.codefactor.io/repository/github/voidfemme/anvil-parser/overview/master)-->
 [![Documentation Status](https://readthedocs.org/projects/anvil-parser/badge/?version=latest)](https://anvil-parser.readthedocs.io/en/latest/?badge=latest)
-<!--[![Tests](https://github.com/lexi-the-cute/anvil-parser/actions/workflows/run-pytest.yml/badge.svg)](https://github.com/lexi-the-cute/anvil-parser/actions/workflows/run-pytest.yml)-->
+<!--[![Tests](https://github.com/voidfemme/anvil-parser/actions/workflows/run-pytest.yml/badge.svg)](https://github.com/voidfemme/anvil-parser/actions/workflows/run-pytest.yml)-->
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/anvil-parser)](https://pypi.org/project/anvil-parser/)
 
 Simple parser for the [Minecraft anvil file format](https://minecraft.gamepedia.com/Anvil_file_format)
@@ -11,12 +11,12 @@ This is a fork of the original anvil-parser with modern type annotations and imp
 
 Install directly from this GitHub repository:
 ```bash
-pip install git+https://github.com/lexi-the-cute/anvil-parser.git
+pip install git+https://github.com/voidfemme/anvil-parser.git
 ```
 
 Or clone and install locally:
 ```bash
-git clone https://github.com/lexi-the-cute/anvil-parser.git
+git clone https://github.com/voidfemme/anvil-parser.git
 cd anvil-parser
 pip install -e
 ```
@@ -69,20 +69,28 @@ region.save('r.0.0.mca')
 
 # Changes from Original
 This fork includes the following improvements:
-- Modern Python type annotations using `X | None` syntax
+- Modern Python type annotations using 'X | None' syntax
 - Enhanced null safety throughout the codebase
 - Bug fixes in block comparison methods
 - Improved code organization with base classes
 - Python 3.13 compatibility
 - Updated dependencies
+- **pathlib.Path support** for modern file handling
 
 # Todo
 *things to do before 1.0.0*
 - [x] Proper documentation
+- [ ] Add support for Minecraft version 1.21.4 and 1.21.5
 - [ ] Biomes
 - [x] CI
 - [ ] More tests
   - [ ] Tests for 20w17a+ BlockStates format
 
 # Note
-Testing done in 1.14.4 and 1.15.2, should work fine for other versions.
+Testing done in 1.14.4 and 1.15.2, more versions to be supported soon!
+
+# Maintainer
+This fork is actively maintained by [voidfemme](https://github.com/voidfemme).
+
+**Original project:** [matcool/anvil-parser](https://github.com/matcool/anvil-parser) (archived)
+**Forked from:** [lexi-the-cute/anvil-parser](https://github.com/lexi-the-cute/anvil-parser)
