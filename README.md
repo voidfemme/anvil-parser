@@ -66,7 +66,7 @@ dirt = anvil.Block('minecraft', 'dirt')
 for y in range(16):
     for z in range(16):
         for x in range(16):
-            region.set_block(choice((stone, dirt)), x, y, z)
+            region.set_block(choice(([stone, dirt])), x, y, z)
 
 # Save to a file
 region.save('r.0.0.mca')
