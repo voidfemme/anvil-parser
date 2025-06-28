@@ -4,7 +4,7 @@
 <!--[![Tests](https://github.com/voidfemme/anvil-parser/actions/workflows/run-pytest.yml/badge.svg)](https://github.com/voidfemme/anvil-parser/actions/workflows/run-pytest.yml)-->
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/anvil-parser)](https://pypi.org/project/anvil-parser/)
 
-Simple parser for the [Minecraft anvil file format](https://minecraft.gamepedia.com/Anvil_file_format)
+Simple parser for the [Minecraft anvil file format](https://minecraft.gamepedia.com/Anvil_file_format) <!--Update to use the real wiki page-->
 
 # Installation
 This is a fork of the original anvil-parser with modern type annotations and improvements.
