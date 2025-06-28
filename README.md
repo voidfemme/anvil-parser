@@ -45,9 +45,10 @@ chunk = anvil.Chunk.from_region(region, 0, 0)
 # and assume it's global
 block = chunk.get_block(0, 0, 0)
 
-print(block) # <Block(minecraft:air)>
-print(block.id) # air
-print(block.properties) # {}
+if block:
+    print(block) # <Block(minecraft:air)>
+    print(block.id) # air
+    print(block.properties) # {}
 ```
 
 ## Making own regions
