@@ -122,7 +122,7 @@ class Chunk:
         try:
             if self.version and self.version >= _VERSION_21w43a:
                 self.data = nbt_data
-                self.tile_entities = self.data['block_entities']
+                self.tile_entities = self.data['block_entities'] # BUG: This should handle 'entities' not 'block_entities' <-double check that this is true
             else:
                 self.data = nbt_data['Level']
                 self.tile_entities = self.data['TileEntities']
@@ -137,7 +137,8 @@ class Chunk:
         try:
             if self.version and self.version >= _VERSION_21w43a:
                 self.data = nbt_data
-                self.tile_entities = self.data['block_entities']
+                self.tile_entities = self.data['block_entities'] # BUG: This should handle 'entities' not 'block_entities' <-double check that this is true
+
             else:
                 self.data = nbt_data['Level']
                 self.tile_entities = self.data['TileEntities']
@@ -220,7 +221,10 @@ class Chunk:
         section
             Either a section NBT tag or an index
 
-        :rtype: tuple[:class:`anvil.Block`]
+        Returns
+        -------
+        tuple[Block, ...] | None
+            a tuple representing the palette, None if the section is None
         """
         if isinstance(section, int):
             section = self.get_section(section)
@@ -261,7 +265,10 @@ class Chunk:
         anvil.errors.OutOfBoundCoordinates
             If X, Y or Z are not in the proper range
 
-        :rtype: :class:`anvil.Block`
+        Returns
+        -------
+        anvil.block.Block
+            The Block object at the given coordinates
         """
         lowest_bound = self.lowest_y * 16 if self.lowest_y is not None else float('-inf')
         highest_bound = self.highest_y * 16 if self.highest_y is not None else float('inf')

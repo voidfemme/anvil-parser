@@ -36,12 +36,22 @@ Chunk
 .. autoclass:: anvil.EmptyChunk
    :members:
 
+Base Section
+~~~~~~~~~~~~
+.. autoclass:: anvil.BaseSection
+   :members:
+
 Section
 ~~~~~~~
 .. autoclass:: anvil.EmptySection
    :members:
 
 .. autoclass:: anvil.RawSection
+   :members:
+
+Utilities
+~~~~~~~~~
+.. automodule:: anvil.utils
    :members:
 
 Errors
