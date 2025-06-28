@@ -5,14 +5,14 @@ with open('README.md', 'r') as file:
 
 setuptools.setup(
     name='anvil-parser',
-    version='0.9.0',
-    author='mat',
+    version='0.10.0',
+    author='voidfemme',
     description='A Minecraft anvil file format parser',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/matcool/anvil-parser',
     packages=setuptools.find_packages(),
-    python_requires=">=3.10"
+    python_requires=">=3.10",
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
