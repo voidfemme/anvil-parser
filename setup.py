@@ -4,7 +4,7 @@ with open('README.md', 'r') as file:
     long_description = file.read()
 
 setuptools.setup(
-    name='anvil-parser',
+    name='anvil-parser-modern',
     version='0.10.0',
     author='voidfemme',
     description='A Minecraft anvil file format parser',

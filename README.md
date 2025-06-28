@@ -9,6 +9,11 @@ Simple parser for the [Minecraft anvil file format](https://minecraft.gamepedia.
 # Installation
 This is a fork of the original anvil-parser with modern type annotations and improvements.
 
+Install from PyPI:
+```bash
+pip install anvil-parser-modern
+```
+
 Install directly from this GitHub repository:
 ```bash
 # Users
