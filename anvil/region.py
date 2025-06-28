@@ -1,9 +1,10 @@
+from pathlib import Path
 from typing import BinaryIO
 from nbt import nbt
 import zlib
 from io import BytesIO
 import anvil
-from .errors import GZipChunkData, EmptyRegionFile, CorruptedData
+from .errors import GZipChunkData, EmptyRegionFile, CorruptedData, InvalidFileType
 
 class Region:
     """
@@ -129,7 +130,7 @@ class Region:
         return anvil.Chunk.from_region(self, chunk_x, chunk_z)
 
     @classmethod
-    def from_file(cls, file: str | BinaryIO):
+    def from_file(cls, file: str | BinaryIO | Path) -> 'anvil.Region':
         """
         Creates a new region with the data from reading the given file
 
@@ -138,8 +139,13 @@ class Region:
         file
             Either a file path or a file object
         """
-        if isinstance(file, str):
+        if isinstance(file, (str, Path)):
             with open(file, 'rb') as f:
                 return cls(data=f.read())
-        else:
+        elif hasattr(file, 'read'):
             return cls(data=file.read())
+        else:
+            raise InvalidFileType({
+                'message':f"Expected str, Path, or file-like object, got {type(file).__name__}",
+                'data' : file
+            })

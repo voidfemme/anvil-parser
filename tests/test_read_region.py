@@ -1,4 +1,4 @@
-from anvil.errors import EmptyRegionFile
+from anvil.errors import EmptyRegionFile, InvalidFileType
 from anvil.empty_region import EmptyRegion
 from anvil.empty_chunk import EmptyChunk
 import context as _
@@ -31,6 +31,20 @@ def test_from_filelike() -> None:
     region = Region.from_file(filelike)
     assert region.data == contents
 
+@pytest.mark.parametrize("_,value", [
+    ('int', 123),
+    ('list', ['not', 'a', 'file']),
+    ('None_type', None),
+    ('dict', {'key': 'value'}),
+    ('float', 420.69),
+    ('object', object()),
+    ('set', {'some', 'set'})
+])
+
+def test_from_file_raises_InvalidFileType(_: str, value: object) -> None:
+    with pytest.raises(InvalidFileType):
+        Region.from_file(value) # type: ignore
+
 def test_chunk_location_existing_chunk() -> None:
     # Create region with a chunk
     empty_region = EmptyRegion(0, 0)
@@ -62,3 +76,35 @@ def test_chunk_location_raises_error() -> None:
     with pytest.raises(EmptyRegionFile):
         region = Region(b'')
         region.chunk_location(0, 0)
+
+def test_chunk_data_existing_chunk() -> None:
+    # set up variables
+    empty_region = EmptyRegion(0, 0)
+    chunk = EmptyChunk(0, 0)
+    empty_region.add_chunk(chunk)
+
+    # Convert to region
+    region_bytes = empty_region.save()
+    region = Region(region_bytes)
+
+    # Call the function
+    result = region.chunk_data(0, 0)
+    assert result != None
+
+def test_chunk_data_returns_none() -> None:
+    pass
+
+def test_chunk_data_empty_data() -> None:
+    pass
+
+def test_chunk_data_handle_unsupported_gzip() -> None:
+    pass
+
+def test_chunk_data_handle_empty_region() -> None:
+    pass
+
+def test_chunk_data_handle_unicode_decode_error() -> None:
+    pass
+
+def test_chunk_data_handle_corrupted_data() -> None:
+    pass

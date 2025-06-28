@@ -8,3 +8,4 @@ build/
 docs/_build/
 examples/test_112.py
 TESTING_GUIDE.md
+*.mca
