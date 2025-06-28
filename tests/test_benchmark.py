@@ -7,9 +7,8 @@ import array
 
 LOGGER = logging.getLogger(__name__)
 
-def test_benchmark():
+def test_benchmark() -> None:
     region = EmptyRegion(0, 0)
-
     block = Block('iron_block')
 
     def func(x: float, z: float) -> float:
@@ -40,7 +39,7 @@ def test_benchmark():
 
     LOGGER.info(f'Saving (average of {n}) took: {sum(times) / len(times):.3f}s')
 
-def test_raw_section():
+def test_raw_section() -> None:
     region = EmptyRegion(0, 0)
 
     block = Block('iron_block')
@@ -96,7 +95,7 @@ def test_raw_section():
 
     LOGGER.info(f'Saving (average of {n}) took: {sum(times) / len(times):.3f}s')
 
-def test_raw_section_simple():
+def test_raw_section_simple() -> None:
     region = EmptyRegion(0, 0)
 
     air = Block('air')
