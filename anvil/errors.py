@@ -22,3 +22,7 @@ class CorruptedData(Exception):
     """
     Exception used when trying to read corrupted data
     """
+class InvalidFileType(Exception):
+    """
+    Exception raised when file parameter is not a valid file path or file-like object
+    """
