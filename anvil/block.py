@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing_extensions import Self
 from nbt import nbt
 from frozendict import frozendict
 from .legacy import LEGACY_ID_MAP
@@ -55,7 +56,7 @@ class Block:
         return hash(self.name()) ^ hash(frozendict(self.properties))
 
     @classmethod
-    def from_name(cls, name: str, *args, **kwargs):
+    def from_name(cls, name: str, *args, **kwargs) -> Self:
         """
         Creates a new Block from the format: ``namespace:block_id``
 
@@ -65,12 +66,13 @@ class Block:
             Block in said format
         args, kwargs
             Will be passed on to the main constructor
+        Returns Self@Block
         """
         namespace, block_id = name.split(':')
         return cls(namespace, block_id, *args, **kwargs)
 
     @classmethod
-    def from_palette(cls, tag: nbt.TAG_Compound):
+    def from_palette(cls, tag: nbt.TAG_Compound) -> Self:
         """
         Creates a new Block from the tag format on section.block_states.palette
 
@@ -86,7 +88,7 @@ class Block:
         return cls.from_name(name, properties=properties)
 
     @classmethod
-    def from_numeric_id(cls, block_id: int, data: int=0):
+    def from_numeric_id(cls, block_id: int, data: int=0) -> Self:
         """
         Creates a new Block from the block_id:data format used pre-flattening (pre-1.13)
 

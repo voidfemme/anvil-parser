@@ -10,3 +10,21 @@ examples/test_112.py
 TESTING_GUIDE.md
 *.mca
 *.bak
+
+
+# Added by cargo
+
+/target
+
+# Rust
+/target/
+Cargo.lock
+
+# Maturin
+*.so
+*.pyd
+*.dll
+
+# Benchmark results
+benchmarks/benchmark_results_*.json
+typenotes.txt

@@ -80,7 +80,7 @@ class EmptyChunk:
         section = self.sections[y // 16]
         if section is None:
             return None
-        return section.get_block(x, y % 16, z)
+        return section.get_block(x, y % 16, z) # type: ignore
 
     def set_block(self, block: Block, x: int, y: int, z: int) -> None:
         """
@@ -111,7 +111,7 @@ class EmptyChunk:
         if section is None:
             section = EmptySection(y // 16)
             self.add_section(section)
-        section.set_block(block, x, y % 16, z)
+        section.set_block(block, x, y % 16, z) # type: ignore
 
     def save(self) -> nbt.NBTFile:
         """

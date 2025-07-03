@@ -1,23 +1,32 @@
+# Build system configuration
+# For Rust builds: use maturin
+# For pure Python builds: use setuptools
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = [
+    "maturin>=1.0,<2.0",
+    "setuptools>=61.0", 
+    "wheel"
+]
+build-backend = "maturin"
 
 [project]
 name = "anvil-parser-modern"
 version = "0.10.0"
-description = "A Minecraft anvil file format parser"
+description = "A fast Minecraft anvil file format parser with optional Rust backend"
 authors = [{name = "voidfemme"}]
-license = "MIT"
+license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11", 
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Rust",
     "Operating System :: OS Independent",
     "Topic :: Games/Entertainment",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -26,7 +35,7 @@ dependencies = [
     "NBT>=1.5.1",
     "frozendict>=2.3.0",
 ]
-keywords = ["minecraft", "anvil", "mca", "region", "chunk", "nbt"]
+keywords = ["minecraft", "anvil", "mca", "region", "chunk", "nbt", "rust", "performance"]
 
 [project.urls]
 Homepage = "https://github.com/voidfemme/anvil-parser"
@@ -37,14 +46,35 @@ Issues = "https://github.com/voidfemme/anvil-parser/issues"
 [project.optional-dependencies]
 dev = [
     "pytest>=6.0.0",
+    "pytest-benchmark>=4.0.0",
+    "maturin>=1.0,<2.0",
     "sphinx>=8.0.0",
     "sphinx-autodoc-typehints>=1.10.3",
     "sphinxcontrib-trio>=1.1.0",
 ]
 
+# Maturin configuration for Rust builds
+[tool.maturin]
+python-source = "."
+module-name = "anvil._rust"
+features = ["pyo3/extension-module"]
+
+# Setuptools configuration (fallback for pure Python)
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["anvil*"]
+
+# Test configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--benchmark-skip"  # Skip benchmarks by default
+
+# Benchmark configuration
+[tool.pytest.ini_options.markers]
+benchmark = "marks tests as benchmarks (deselect with '-m \"not benchmark\"')"

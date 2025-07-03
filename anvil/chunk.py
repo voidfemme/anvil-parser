@@ -1,7 +1,9 @@
 from collections.abc import Generator
+from typing import Any
 from nbt import nbt
+import io
+
 from .block import Block, OldBlock
-from .region import Region
 from .errors import OutOfBoundsCoordinates, ChunkNotFound, EmptyRegionFile
 from .utils import bin_append, nibble
 
@@ -22,7 +24,6 @@ from .utils import bin_append, nibble
 # Map Format - https://minecraft.wiki/w/Map_item_format
 # Servers.dat Format - https://minecraft.wiki/w/Servers.dat_format
 # Schematic File Format (Unofficial) - https://minecraft.wiki/w/Schematic_file_format
-
 
 # Chunk Format Changed - https://minecraft.wiki/w/Java_Edition_21w43a
 # Removed the Level tag and moved everything up a level (e.g. Level.TileEntities to block_entities)
@@ -116,29 +117,13 @@ class Chunk:
 
         # print("(X: %s, Z: %s, L: %s, H: %s)" % (self.x, self.z, self.lowest_y, self.highest_y))
 
-    def init_block_entities(self, nbt_data: nbt.NBTFile):
+    def init_block_entities(self, nbt_data: nbt.NBTFile) -> None:
         # We may be reading a chunk that holds entities or something else,
         #   so block entities may not exist in this data
         try:
             if self.version and self.version >= _VERSION_21w43a:
                 self.data = nbt_data
                 self.tile_entities = self.data['block_entities'] # BUG: This should handle 'entities' not 'block_entities' <-double check that this is true
-            else:
-                self.data = nbt_data['Level']
-                self.tile_entities = self.data['TileEntities']
-        except KeyError:
-            # We're reading something without block entities
-            self.tile_entities = None
-
-        # to match the rename. we aren't getting rid of tile_entities, just making sure there's a match with the modern term
-        self.block_entities = self.tile_entities
-
-    def init_entities(self, nbt_data: nbt.NBTFile):
-        try:
-            if self.version and self.version >= _VERSION_21w43a:
-                self.data = nbt_data
-                self.tile_entities = self.data['block_entities'] # BUG: This should handle 'entities' not 'block_entities' <-double check that this is true
-
             else:
                 self.data = nbt_data['Level']
                 self.tile_entities = self.data['TileEntities']
@@ -586,7 +571,7 @@ class Chunk:
         return None
 
     @classmethod
-    def from_region(cls, region: str | Region, chunk_x: int, chunk_z: int):
+    def from_region(cls, region: Any, chunk_x: int, chunk_z: int):
         """
         Creates a new chunk from region and the chunk's X and Z
 
@@ -601,8 +586,19 @@ class Chunk:
             If a chunk is outside this region or hasn't been generated yet
         """
         if isinstance(region, str):
+            # Import at runtime to get the correct backend
+            from . import Region  # This gets RustRegion or PythonRegion
             region = Region.from_file(region)
+
+        # Get chunk data from region
         nbt_data = region.chunk_data(chunk_x, chunk_z)
         if nbt_data is None:
             raise ChunkNotFound(f'Could not find chunk ({chunk_x}, {chunk_z})')
+
+        # Convert bytes to NBTFile if necessary
+        if isinstance(nbt_data, bytes):
+            nbt_data = nbt.NBTFile(buffer=io.BytesIO(nbt_data))
+        else:
+            nbt_data = nbt_data
+
         return cls(nbt_data)

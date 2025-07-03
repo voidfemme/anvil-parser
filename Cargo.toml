@@ -1,0 +1,23 @@
+[package]
+name = "anvil-parser-rust"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "_rust"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.22", features = ["extension-module"] }
+anyhow = "1.0"
+thiserror = "1.0"
+byteorder = "1.5"
+flate2 = "1.0"
+fastnbt = { version = "2.5.0", optional = true }
+
+[features]
+default = []
+nbt = ["fastnbt"]
+
+[build-dependencies]
+pyo3-build-config = "0.22"

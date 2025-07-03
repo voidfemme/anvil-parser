@@ -1,4 +1,6 @@
 from typing import BinaryIO
+
+from anvil._rust import RustBlock
 from .empty_chunk import EmptyChunk
 from .chunk import Chunk
 from .empty_section import EmptySection
@@ -73,7 +75,7 @@ class EmptyRegion:
             raise OutOfBoundsCoordinates(f'Chunk ({x}, {z}) is not inside this region')
         return self.chunks[z % 32 * 32 + x % 32]
 
-    def add_chunk(self, chunk: EmptyChunk):
+    def add_chunk(self, chunk: EmptyChunk) -> None:
         """
         Adds given chunk to this region.
         Will overwrite if a chunk already exists in this location
@@ -91,7 +93,13 @@ class EmptyRegion:
             raise OutOfBoundsCoordinates(f'Chunk ({chunk.x}, {chunk.z}) is not inside this region')
         self.chunks[chunk.z % 32 * 32 + chunk.x % 32] = chunk
 
-    def add_section(self, section: EmptySection | RawSection, x: int, z: int, replace: bool=True):
+    def add_section(
+            self, 
+            section: EmptySection | RawSection, 
+            x: int, 
+            z: int, 
+            replace: bool=True
+    ) -> None:
         """
         Adds section to chunk at (x, z).
         Same as ``EmptyChunk.add_section(section)``
@@ -118,7 +126,7 @@ class EmptyRegion:
             self.add_chunk(chunk)
         chunk.add_section(section, replace)
 
-    def set_block(self, block: Block, x: int, y: int, z: int):
+    def set_block(self, block: Block, x: int, y: int, z: int) -> None:
         """
         Sets block at given coordinates.
         New chunk is made if it doesn't exist.

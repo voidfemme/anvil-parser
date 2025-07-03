@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import BinaryIO
+from typing_extensions import Self
 from nbt import nbt
 import zlib
 from io import BytesIO
@@ -127,7 +128,7 @@ class Region:
 
         return nbt_data
 
-    def get_chunk(self, chunk_x: int, chunk_z: int) -> 'anvil.Chunk':
+    def get_chunk(self, chunk_x: int, chunk_z: int) -> anvil.Chunk:
         """
         Returns the chunk at given coordinates,
         same as doing ``Chunk.from_region(region, chunk_x, chunk_z)``
@@ -142,10 +143,13 @@ class Region:
         
         :rtype: :class:`anvil.Chunk`
         """
-        return anvil.Chunk.from_region(self, chunk_x, chunk_z)
+        # Argument missing for parameter "chunk_z"
+        region = anvil.Region()
+
+        return anvil.Chunk.from_region(self, region, chunk_x, chunk_z)
 
     @classmethod
-    def from_file(cls, file: str | BinaryIO | Path) -> 'anvil.Region':
+    def from_file(cls, file: str | BinaryIO | Path) -> Self:
         """
         Creates a new region with the data from reading the given file
 
